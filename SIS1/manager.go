@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type TaskManager struct {
 	tasks     map[int]*Task
 	nextID    int
@@ -48,6 +50,8 @@ func (m *TaskManager) ProcessTask(id int) (Task, error) {
 	if err := task.SetState(StatusProcessing); err != nil {
 		return Task{}, err
 	}
+
+	fmt.Println("Processing task....")
 
 	result := m.processor.Process(task.Password)
 	task.Result = result
