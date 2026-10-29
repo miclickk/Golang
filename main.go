@@ -2,14 +2,16 @@ package main
 
 import "fmt"
 
-var a = 3
-var b = 4
+type MyError struct{}
 
-func add(a int, b int) int {
-	return a + b
+func (e *MyError) Error() string { return "boom" }
+
+func check() error {
+	var err *MyError = nil
+	return err
 }
 
 func main() {
-	fmt.Println("Hello, World!")
-	fmt.Println(add(a, b))
+	err := check()
+	fmt.Println(err == nil)
 }
