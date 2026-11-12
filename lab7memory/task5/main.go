@@ -17,7 +17,7 @@ func keepHeadersSlice(n int) [][]byte {
 	var headers [][]byte
 	for i := 0; i < n; i++ {
 		data := readFile(i)
-		headers = append(headers, data[:11]) // УТЕЧКА!
+		headers = append(headers, data[:11])
 	}
 	return headers
 }
@@ -26,7 +26,7 @@ func keepHeadersCopy(n int) [][]byte {
 	var headers [][]byte
 	for i := 0; i < n; i++ {
 		data := readFile(i)
-		headers = append(headers, bytes.Clone(data[:11])) // ПРАВИЛЬНО
+		headers = append(headers, bytes.Clone(data[:11]))
 	}
 	return headers
 }
@@ -34,7 +34,6 @@ func keepHeadersCopy(n int) [][]byte {
 func TestLeaks(t *testing.T) {
 	var m runtime.MemStats
 
-	// Тест утечки
 	headers := keepHeadersSlice(100)
 	runtime.GC()
 	runtime.ReadMemStats(&m)

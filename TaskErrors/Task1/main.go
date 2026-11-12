@@ -31,3 +31,7 @@ func fibonacci() func() int {
 		return res
 	}
 }
+
+func main() {
+	makeAccumulator()
+}

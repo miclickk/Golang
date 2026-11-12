@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 func depth(n int) int {
-	var pad [1024]byte // Меняем на 1024
+	var pad [1024]byte
 	pad[n%len(pad)] = byte(n)
 	if n == 0 {
 		return 0

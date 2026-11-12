@@ -1,60 +1,37 @@
 package main
 
-import (
-	"errors"
-	"fmt"
-)
-
-var ErrNotFound = errors.New("student not found")
-
-type GradeError struct {
-	Student string
-	Grade   int
+// Task 1.1: Accumulator
+func makeAccumulator() func(int) int {
+	sum := 0
+	return func(x int) int {
+		sum += x
+		return sum
+	}
 }
 
-func (e *GradeError) Error() string {
-	return fmt.Sprintf("invalid grade %d for %s", e.Grade, e.Student)
+// Task 1.2: Memoize
+func memoize(f func(int) int) func(int) int {
+	cache := make(map[int]int)
+	return func(n int) int {
+		if val, ok := cache[n]; ok {
+			return val
+		}
+		res := f(n)
+		cache[n] = res
+		return res
+	}
 }
 
-type GradeBook map[string]int
-
-func (gb GradeBook) Get(name string) (int, error) {
-	if g, ok := gb[name]; ok {
-		return g, nil
+// Task 2: Fibonacci closure
+func fibonacci() func() int {
+	a, b := 0, 1
+	return func() int {
+		res := a
+		a, b = b, a+b
+		return res
 	}
-	return 0, ErrNotFound
 }
 
-func (gb GradeBook) Set(name string, grade int) error {
-	if grade < 0 || grade > 100 {
-		return &GradeError{Student: name, Grade: grade}
-	}
-	gb[name] = grade
-	return nil
-}
-
-func AddBonus(gb GradeBook, name string, bonus int) error {
-	g, err := gb.Get(name)
-	if err != nil {
-		return fmt.Errorf("add bonus: %w", err)
-	}
-	if err := gb.Set(name, g+bonus); err != nil {
-		return fmt.Errorf("add bonus: %w", err)
-	}
-	return nil
-}
-
-func report(err error) {
-	if err == nil {
-		fmt.Println("OK")
-		return
-	}
-	var ge *GradeError
-	if errors.Is(err, ErrNotFound) {
-		fmt.Println("404: not found")
-	} else if errors.As(err, &ge) {
-		fmt.Printf("400: invalid grade %d for %s\n", ge.Grade, ge.Student)
-	} else {
-		fmt.Println("500:", err)
-	}
+func main() {
+	makeAccumulator()
 }

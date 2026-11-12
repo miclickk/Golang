@@ -16,7 +16,7 @@ func (r *Resource) Close() { fmt.Println("close", r.Name) }
 func processAllBad(names []string) {
 	for _, name := range names {
 		r, _ := Open(name)
-		defer r.Close() // Выполнится только в конце всей функции
+		defer r.Close()
 	}
 }
 
@@ -24,7 +24,7 @@ func processAllGood(names []string) {
 	for _, name := range names {
 		func() {
 			r, _ := Open(name)
-			defer r.Close() // Выполнится в конце каждой итерации
+			defer r.Close()
 		}()
 	}
 }

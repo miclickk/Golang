@@ -33,4 +33,5 @@ func main() {
 
 	addCoursePointer(&s2, "History")
 	fmt.Printf("После addCoursePointer: %+v\n", s2)
+
 }
