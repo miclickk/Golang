@@ -28,7 +28,7 @@ func (m *TaskManager) Start(workers, queueSize int) {
 	if m.started {
 		return
 	}
-	if workers < 1 {
+	if workers < 2 {
 		workers = 2
 	}
 	if queueSize < 1 {
@@ -107,13 +107,12 @@ func (m *TaskManager) SubmitTask(id int) error {
 
 	select {
 	case m.queue <- id:
-		task.State = StatusQueued
+		_ = task.SetState(StatusQueued)
 		return nil
 	default:
 		return ErrQueueFull
 	}
 }
-
 func (m *TaskManager) ProcessTask(id int) (Task, error) {
 	m.mu.Lock()
 	task, exists := m.tasks[id]
