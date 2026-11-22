@@ -2,16 +2,16 @@ package main
 
 import (
 	"errors"
-	"strings"
 	"unicode"
 )
 
-type Status string
+type TaskState string
 
 const (
-	StatusPending    Status = "Pending"
-	StatusProcessing Status = "Processing"
-	StatusCompleted  Status = "Completed"
+	StatusPending    TaskState = "Pending"
+	StatusQueued     TaskState = "Queued"
+	StatusProcessing TaskState = "Processing"
+	StatusCompleted  TaskState = "Completed"
 )
 
 var (
@@ -19,6 +19,8 @@ var (
 	ErrPasswordHasSpaces = errors.New("password cannot contain spaces")
 	ErrTaskNotFound      = errors.New("task not found")
 	ErrInvalidState      = errors.New("task cannot be processed in its current state")
+	ErrQueueFull         = errors.New("task queue is full")
+	ErrManagerStopped    = errors.New("task manager is stopped")
 )
 
 type AnalysisResult struct {
@@ -32,7 +34,7 @@ type AnalysisResult struct {
 type Task struct {
 	ID       int
 	Password string
-	State    Status
+	State    TaskState
 	Result   AnalysisResult
 }
 
@@ -40,24 +42,35 @@ func (t Task) IsCompleted() bool {
 	return t.State == StatusCompleted
 }
 
-func (t *Task) SetState(newState Status) error {
-	if t.State == StatusPending && newState == StatusProcessing {
-		t.State = newState
-		return nil
+func (t *Task) SetState(newState TaskState) error {
+	switch newState {
+	case StatusQueued:
+		if t.State != StatusPending {
+			return ErrInvalidState
+		}
+	case StatusProcessing:
+		if t.State != StatusPending && t.State != StatusQueued {
+			return ErrInvalidState
+		}
+	case StatusCompleted:
+		if t.State != StatusProcessing {
+			return ErrInvalidState
+		}
+	default:
+		return ErrInvalidState
 	}
-	if t.State == StatusProcessing && newState == StatusCompleted {
-		t.State = newState
-		return nil
-	}
-	return ErrInvalidState
+	t.State = newState
+	return nil
 }
 
 func ValidatePassword(password string) error {
-	if len(password) == 0 {
+	if password == "" {
 		return ErrEmptyPassword
 	}
-	if strings.Contains(password, " ") {
-		return ErrPasswordHasSpaces
+	for _, ch := range password {
+		if unicode.IsSpace(ch) {
+			return ErrPasswordHasSpaces
+		}
 	}
 	return nil
 }
@@ -68,7 +81,7 @@ type Processor interface {
 
 type PasswordProcessor struct{}
 
-func (p PasswordProcessor) Process(password string) AnalysisResult {
+func (PasswordProcessor) Process(password string) AnalysisResult {
 	res := AnalysisResult{
 		Length: len([]rune(password)),
 	}
@@ -97,12 +110,13 @@ func (p PasswordProcessor) Process(password string) AnalysisResult {
 		score++
 	}
 
-	if score <= 1 {
-		res.Strength = "Weak"
-	} else if score <= 3 {
-		res.Strength = "Medium"
-	} else {
+	switch {
+	case score >= 4:
 		res.Strength = "Strong"
+	case score >= 2:
+		res.Strength = "Medium"
+	default:
+		res.Strength = "Weak"
 	}
 
 	return res

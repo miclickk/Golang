@@ -3,38 +3,34 @@ package main
 import "fmt"
 
 func main() {
-	processor := PasswordProcessor{}
-	manager := NewTaskManager(processor)
+	manager := NewTaskManager(PasswordProcessor{})
+	manager.Start(3, 5)
 
-	task1, err := manager.CreateTask("Rapper123$")
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("Created Task #%d | State: %s | Completed: %v\n", task1.ID, task1.State, task1.IsCompleted())
+	passwords := []string{"weak", "Medium12", "Sup3r$ecret", "Another#99"}
+	var ids []int
 
-	processedTask1, err := manager.ProcessTask(task1.ID)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("Processed Task #%d | State: %s | Strength: %s | Length: %d | Digits: %d | Upper: %d | Special: %d\n",
-		processedTask1.ID,
-		processedTask1.State,
-		processedTask1.Result.Strength,
-		processedTask1.Result.Length,
-		processedTask1.Result.Digits,
-		processedTask1.Result.Upper,
-		processedTask1.Result.Special,
-	)
-
-	_, err = manager.CreateTask("bad password")
-	if err != nil {
-		fmt.Println("Expected validation error:", err)
+	for _, pwd := range passwords {
+		task, err := manager.CreateTask(pwd)
+		if err != nil {
+			fmt.Println("Create error:", err)
+			continue
+		}
+		if err := manager.SubmitTask(task.ID); err != nil {
+			fmt.Println("Submit error:", err)
+			continue
+		}
+		ids = append(ids, task.ID)
 	}
 
-	_, err = manager.ProcessTask(task1.ID)
-	if err != nil {
-		fmt.Println("Expected state error:", err)
+	manager.Stop()
+
+	for _, id := range ids {
+		task, err := manager.GetTask(id)
+		if err != nil {
+			fmt.Println("Get error:", err)
+			continue
+		}
+		fmt.Printf("Task #%d | State: %s | Strength: %s | Len: %d\n",
+			task.ID, task.State, task.Result.Strength, task.Result.Length)
 	}
 }
